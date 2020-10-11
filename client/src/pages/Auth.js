@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useContext } from 'react';
+import AuthContext from '../context/auth-context';
 
 function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const emailRef = useRef('');
   const passwordRef = useRef('');
+  const authContext = useContext(AuthContext);
 
   const handleSwitch = () => {
     setIsLogin(!isLogin);
@@ -52,17 +53,19 @@ function Auth() {
           'Content-Type': 'application/json',
         },
       });
-      // if (res.status !== 200 || res.status !== 201) {
-      //   throw new Error('Failed');
-      // }
-      const data = await res.json();
-      console.log(data);
-    } catch (err) {
-      console.log(err);
-    }
 
-    // emailRef.current.value = '';
-    // passwordRef.current.value = '';
+      const { data } = await res.json();
+
+      if (data.login.token) {
+        authContext.login(
+          data.login.token,
+          data.login.userId,
+          data.login.tokenExpiration
+        );
+      }
+    } catch (err) {
+      throw new Error(err);
+    }
   };
 
   return (
@@ -72,50 +75,59 @@ function Auth() {
         className="column is-half is-offset-one-quarter"
       >
         <div className="field">
+          <label className="label" htmlFor="email">
+            Email
+          </label>
           <p className="control has-icons-left has-icons-right">
-            <label className="label">Email</label>
             <input
               ref={emailRef}
               className="input"
               type="email"
               placeholder="Email"
+              native-type="email"
+              name="email"
             />
+            <span className="icon is-small is-left">
+              <i className="fas fa-envelope"></i>
+            </span>
+            <span className="icon is-small is-right">
+              <i className="fas fa-check"></i>
+            </span>
           </p>
         </div>
         <div className="field">
+          <label className="label" htmlFor="password">
+            Password
+          </label>
           <p className="control has-icons-left">
-            <label className="label">Password</label>
             <input
               ref={passwordRef}
               className="input"
               type="password"
               placeholder="Password"
+              native-type="password"
+              name="password"
             />
+            <span className="icon is-small is-left">
+              <i className="fas fa-lock"></i>
+            </span>
           </p>
         </div>
-        <div className="level">
-          <div className="level-item">
-            <div className="field">
-              <p className="control">
-                <button type="submit" className="button is-success">
-                  {isLogin ? 'Login' : 'Sign In'}
-                </button>
-              </p>
-            </div>
-          </div>
-          <div className="level-item">
-            <div className="field">
-              <p className="control">
-                <button
-                  type="button"
-                  className="button is-info"
-                  onClick={handleSwitch}
-                >
-                  {isLogin ? 'Sign In' : 'Login'}
-                </button>
-              </p>
-            </div>
-          </div>
+        <div className="field is-grouped is-grouped-centered">
+          <p className="control">
+            <button native-type="submit" className="button is-primary">
+              {isLogin ? 'Login' : 'Sign Up'}
+            </button>
+          </p>
+          <p className="control">
+            <button
+              native-type="button"
+              className="button is-info"
+              onClick={handleSwitch}
+            >
+              Switch to {isLogin ? 'Sign Up' : 'Login'}
+            </button>
+          </p>
         </div>
       </form>
     </div>
