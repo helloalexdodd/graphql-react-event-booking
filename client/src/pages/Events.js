@@ -1,23 +1,68 @@
 import React, { useEffect, useState, useRef, useContext } from 'react';
 import Context from '../context/auth-context';
 import Modal from '../components/Modal';
+import CreateEvent from '../components/CreateEvent';
+import EventDetails from '../components/EventDetails';
+import EventList from '../components/EventList/EventList';
+import Loading from '../components/Loading/Loading';
 
 function Events() {
   const [showModal, setShowModal] = useState(false);
   const [events, setEvents] = useState([]);
+  const [eventDetails, setEventDetails] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const titleRef = useRef('');
   const priceRef = useRef('');
   const dateRef = useRef('');
   const timeRef = useRef('');
   const descriptionRef = useRef('');
-  const { token } = useContext(Context);
+  const { token, userId } = useContext(Context);
 
   const handleShowModal = () => {
     setShowModal(!showModal);
   };
 
+  const handleShowDetails = (eventId) => {
+    if (eventId) {
+      const eventDetails = events.find((event) => event._id === eventId);
+      return setEventDetails(eventDetails);
+    }
+    setEventDetails(null);
+  };
+
+  const handleBookEvent = async (eventId) => {
+    const requestBody = {
+      query: `
+        mutation {
+          bookEvent(eventId: "${eventId}") {
+            _id
+            createdAt
+            updatedAt
+          }
+        }
+      `,
+    };
+    try {
+      const res = await fetch('http://localhost:4000/graphql', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setEventDetails(null);
+      console.log(data);
+    } catch (err) {
+      console.log(err);
+      setEventDetails(null);
+    }
+  };
+
   const fetchEvents = async () => {
-    let requestBody = {
+    setIsLoading(true);
+    const requestBody = {
       query: `
         query {
           events {
@@ -44,10 +89,11 @@ function Events() {
         },
       });
       const { data } = await res.json();
-      console.log(data.events);
+      setIsLoading(false);
       setEvents(data.events);
     } catch (err) {
-      throw new Error(err);
+      setIsLoading(false);
+      console.log(err);
     }
   };
 
@@ -67,9 +113,7 @@ function Events() {
       return;
     }
 
-    const event = { title, price, date, description };
-
-    let requestBody = {
+    const requestBody = {
       query: `
         mutation {
           createEvent(eventInput: { title: "${title}", description: "${description}", price: ${price}, date: "${date}" }) {
@@ -78,10 +122,6 @@ function Events() {
             description
             price
             date
-            creator {
-              _id
-              email
-            }
           }
         }
       `,
@@ -97,125 +137,52 @@ function Events() {
         },
       });
 
-      await res.json();
-      fetchEvents();
+      const { data } = await res.json();
+      const { createEvent } = data;
+      createEvent.creator = {
+        _id: userId,
+      };
+      setEvents([...events, createEvent]);
     } catch (err) {
-      throw new Error(err);
+      console.log(err);
     }
 
     setShowModal(false);
   };
 
   useEffect(() => {
-    fetchEvents();
+    if (document) fetchEvents();
   }, []);
 
   return (
     <>
-      <section className="section">
-        <Modal
-          showModal={showModal}
-          handleShowModal={handleShowModal}
+      <Modal
+        showModal={showModal}
+        handleShowModal={handleShowModal}
+        handleCreateEvent={handleCreateEvent}
+      >
+        <CreateEvent
+          titleRef={titleRef}
+          priceRef={priceRef}
+          dateRef={dateRef}
+          timeRef={timeRef}
+          descriptionRef={descriptionRef}
           handleCreateEvent={handleCreateEvent}
-        >
-          <form>
-            <div className="field">
-              <label className="label" htmlFor="title">
-                Title
-              </label>
-              <div className="control">
-                <input
-                  className="input"
-                  type="text"
-                  placeholder="Title"
-                  id="title"
-                  name="title"
-                  ref={titleRef}
-                />
-              </div>
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="price">
-                Price
-              </label>
-              <div className="control">
-                <input
-                  className="input"
-                  type="number"
-                  placeholder="Price"
-                  id="price"
-                  name="price"
-                  ref={priceRef}
-                />
-              </div>
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="date">
-                Date
-              </label>
-              <div className="control">
-                <input
-                  className="input"
-                  type="date"
-                  placeholder="Date"
-                  id="date"
-                  name="date"
-                  ref={dateRef}
-                />
-              </div>
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="time">
-                Time
-              </label>
-              <div className="control">
-                <input
-                  className="input"
-                  type="time"
-                  placeholder="Time"
-                  id="time"
-                  name="time"
-                  ref={timeRef}
-                />
-              </div>
-            </div>
-            <div className="field">
-              <label className="label" htmlFor="description">
-                Description
-              </label>
-              <div className="control">
-                <textarea
-                  className="textarea"
-                  placeholder="Description"
-                  id="description"
-                  name="description"
-                  ref={descriptionRef}
-                />
-              </div>
-            </div>
-            <div className="field is-grouped is-grouped-centered">
-              <p className="control">
-                <button
-                  native-type="submit"
-                  className="button is-primary"
-                  onClick={handleCreateEvent}
-                >
-                  Submit
-                </button>
-              </p>
-              <p className="control">
-                <button
-                  native-type="button"
-                  className="button is-light"
-                  onClick={handleShowModal}
-                >
-                  Cancel
-                </button>
-              </p>
-            </div>
-          </form>
+          handleShowModal={handleShowModal}
+        />
+      </Modal>
+      {!!eventDetails && (
+        <Modal showModal={!!eventDetails} handleShowModal={handleShowDetails}>
+          <EventDetails
+            eventDetails={eventDetails}
+            closeModal={handleShowDetails}
+            handleBookEvent={handleBookEvent}
+            token={token}
+          ></EventDetails>
         </Modal>
-        {token && (
+      )}
+      {token && (
+        <section className="section">
           <div className="container">
             <div className="columns is-centered">
               {/* <p className="label" htmlFor="events">
@@ -230,22 +197,21 @@ function Events() {
               </button>
             </div>
           </div>
-        )}
-      </section>
-      <section className="section">
-        {!!events.length && (
-          <ul>
-            {events.map((event) => (
-              <li className="box">
-                <h3>{event.title}</h3>
-                <p>{event.description}</p>
-                <p>{event.price}</p>
-                <p>{event.date}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+        </section>
+      )}
+      {isLoading ? (
+        <Loading />
+      ) : (
+        <section className="section">
+          {!!events.length && (
+            <EventList
+              events={events}
+              userId={userId}
+              handleShowModal={handleShowDetails}
+            />
+          )}
+        </section>
+      )}
     </>
   );
 }
