@@ -127,7 +127,6 @@ function Events() {
   };
 
   const handleCreateEvent = async (e) => {
-    console.log("it's a  party!");
     e.preventDefault();
     const title = titleRef.current.value;
     const price = +priceRef.current.value;
@@ -157,7 +156,6 @@ function Events() {
       variables: { title, description, price, date },
     };
 
-    console.log('is it a party here too?');
     try {
       const res = await fetch('http://localhost:4000/graphql', {
         method: 'POST',
