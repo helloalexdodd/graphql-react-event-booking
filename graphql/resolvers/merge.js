@@ -28,11 +28,7 @@ const getEvents = async (eventIds) => {
   try {
     const events = await Event.find({ _id: { $in: eventIds } });
     return events.map((event) => {
-      return {
-        ...event._doc,
-        _id: event.id,
-        creator: getUser.bind(this, event.creator),
-      };
+      return transformEvent(event);
     });
   } catch (err) {
     throw err;
@@ -53,7 +49,7 @@ const transformEvent = async (event) => {
     ...event._doc,
     _id: event.id,
     date: dateToString(event._doc.date),
-    creator: getUser.bind(this, event._doc.creator),
+    creator: getUser.bind(this, event.creator),
   };
 };
 

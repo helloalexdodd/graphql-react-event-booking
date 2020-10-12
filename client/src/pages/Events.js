@@ -22,6 +22,35 @@ function Events() {
     setShowModal(!showModal);
   };
 
+  const handleCancelEvent = async (eventId) => {
+    const requestBody = {
+      query: `
+      mutation CancelEvent($id: ID!) {
+        cancelEvent(eventId: $id) {
+          _id
+          title
+        }
+      }
+      `,
+      variables: { id: eventId },
+    };
+    try {
+      const res = await fetch('http://localhost:4000/graphql', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      const newEvents = events.filter((event) => event._id !== eventId);
+      setEvents(newEvents);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const handleShowDetails = (eventId) => {
     if (eventId) {
       const eventDetails = events.find((event) => event._id === eventId);
@@ -33,14 +62,15 @@ function Events() {
   const handleBookEvent = async (eventId) => {
     const requestBody = {
       query: `
-        mutation {
-          bookEvent(eventId: "${eventId}") {
+        mutation BookEvent($eventId: ID!) {
+          bookEvent(eventId: $eventId) {
             _id
             createdAt
             updatedAt
           }
         }
       `,
+      variables: { eventId },
     };
     try {
       const res = await fetch('http://localhost:4000/graphql', {
@@ -53,7 +83,6 @@ function Events() {
       });
       const data = await res.json();
       setEventDetails(null);
-      console.log(data);
     } catch (err) {
       console.log(err);
       setEventDetails(null);
@@ -98,6 +127,7 @@ function Events() {
   };
 
   const handleCreateEvent = async (e) => {
+    console.log("it's a  party!");
     e.preventDefault();
     const title = titleRef.current.value;
     const price = +priceRef.current.value;
@@ -106,17 +136,16 @@ function Events() {
 
     if (
       title.trim().length === 0 ||
-      price <= 0 ||
+      price < 0 ||
       date.trim().length === 0 ||
       description.trim().length === 0
     ) {
       return;
     }
-
     const requestBody = {
       query: `
-        mutation {
-          createEvent(eventInput: { title: "${title}", description: "${description}", price: ${price}, date: "${date}" }) {
+        mutation CreateEvent($title: String!, $description: String!, $price: Float!, $date: String!) {
+          createEvent(eventInput: { title: $title, description: $description, price: $price, date: $date }) {
             _id
             title
             description
@@ -124,9 +153,11 @@ function Events() {
             date
           }
         }
-      `,
+        `,
+      variables: { title, description, price, date },
     };
 
+    console.log('is it a party here too?');
     try {
       const res = await fetch('http://localhost:4000/graphql', {
         method: 'POST',
@@ -146,7 +177,11 @@ function Events() {
     } catch (err) {
       console.log(err);
     }
-
+    titleRef.current.value = '';
+    priceRef.current.value = '';
+    dateRef.current.value = '';
+    timeRef.current.value = '';
+    descriptionRef.current.value = '';
     setShowModal(false);
   };
 
@@ -156,11 +191,7 @@ function Events() {
 
   return (
     <>
-      <Modal
-        showModal={showModal}
-        handleShowModal={handleShowModal}
-        handleCreateEvent={handleCreateEvent}
-      >
+      <Modal showModal={showModal} handleShowModal={handleShowModal}>
         <CreateEvent
           titleRef={titleRef}
           priceRef={priceRef}
@@ -208,6 +239,7 @@ function Events() {
               events={events}
               userId={userId}
               handleShowModal={handleShowDetails}
+              handleCancelEvent={handleCancelEvent}
             />
           )}
         </section>

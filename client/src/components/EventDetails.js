@@ -4,8 +4,8 @@ function EventDetails({ eventDetails, closeModal, handleBookEvent, token }) {
   const { title, description, price, date, _id } = eventDetails;
   return (
     <>
-      <div className="has-text-centered">
-        <h3>{title}</h3>
+      <div className="m-4 has-text-centered">
+        <h3 className="is-size-4">{title}</h3>
         <h4>
           $ {price} - {new Date(date).toLocaleDateString('ca-CA')}
         </h4>

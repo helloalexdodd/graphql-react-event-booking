@@ -14,17 +14,17 @@ function Bookings() {
     setIsLoading(true);
     const requestBody = {
       query: `
-      query {
-        bookings {
-          _id
-          createdAt
-          event {
+        query {
+          bookings {
             _id
-            title
-            date
+            createdAt
+            event {
+              _id
+              title
+              date
+            }
           }
         }
-      }
       `,
     };
 
@@ -39,6 +39,7 @@ function Bookings() {
       });
       const { data } = await res.json();
       setIsLoading(false);
+      console.log(data);
       if (!!isActive.current) setBookings(data.bookings);
     } catch (err) {
       setIsLoading(false);
@@ -50,13 +51,14 @@ function Bookings() {
     setIsLoading(false);
     const requestBody = {
       query: `
-      mutation {
-        cancelBooking(bookingId: "${bookingId}") {
+      mutation CancelBooking($id: ID!) {
+        cancelBooking(bookingId: $id) {
           _id
           title
         }
       }
       `,
+      variables: { id: bookingId },
     };
 
     try {

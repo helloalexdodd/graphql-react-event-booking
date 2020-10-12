@@ -1,5 +1,6 @@
 const { User } = require('../../models/user');
 const { Event } = require('../../models/event');
+const { Booking } = require('../../models/booking');
 const { transformEvent } = require('./merge');
 const { dateToString } = require('../../helpers/date');
 
@@ -33,6 +34,21 @@ module.exports = {
       user.createdEvents.push(event);
       await user.save();
       return createdEvent;
+    } catch (err) {
+      throw err;
+    }
+  },
+  cancelEvent: async (args, req) => {
+    if (!req.isAuth) throw new Error('Unauthenticated');
+
+    try {
+      const event = await Event.findById(args.eventId);
+      if (req.userId !== event.creator.toString())
+        throw new Error('This is not your event');
+
+      await Booking.deleteMany({ event: args.eventId });
+      await Event.deleteOne({ _id: args.eventId });
+      return event;
     } catch (err) {
       throw err;
     }

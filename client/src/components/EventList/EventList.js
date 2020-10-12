@@ -1,7 +1,7 @@
 import React from 'react';
 import EventListItem from './EventListItem';
 
-function EventList({ events, userId, handleShowModal }) {
+function EventList({ events, userId, handleShowModal, handleCancelEvent }) {
   return (
     <ul className="row columns is-multiline">
       {events.map((event) => (
@@ -10,6 +10,7 @@ function EventList({ events, userId, handleShowModal }) {
           event={event}
           userId={userId}
           handleShowModal={handleShowModal}
+          handleCancelEvent={handleCancelEvent}
         />
       ))}
     </ul>

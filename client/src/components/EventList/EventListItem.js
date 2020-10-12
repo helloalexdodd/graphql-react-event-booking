@@ -1,6 +1,6 @@
 import React from 'react';
 
-function EventListItem({ event, userId, handleShowModal }) {
+function EventListItem({ event, userId, handleShowModal, handleCancelEvent }) {
   const { title, price, _id, date } = event;
   return (
     <li className="column is-4">
@@ -12,7 +12,12 @@ function EventListItem({ event, userId, handleShowModal }) {
               $ {price} - {new Date(date).toLocaleDateString('ca-CA')}
             </h4>
             {userId === event.creator._id ? (
-              <p>You are the owner of this event.</p>
+              <button
+                className="button is-danger"
+                onClick={() => handleCancelEvent(_id)}
+              >
+                Delete Event
+              </button>
             ) : (
               <button
                 className="button is-info"

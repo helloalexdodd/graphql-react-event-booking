@@ -51,6 +51,7 @@ module.exports = buildSchema(`
 
   type RootMutation {
     createEvent(eventInput: EventInput): Event
+    cancelEvent(eventId: ID!): Event
     createUser(userInput: UserInput): User
     bookEvent(eventId: ID!): Booking!
     cancelBooking(bookingId: ID!): Event!
