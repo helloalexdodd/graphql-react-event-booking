@@ -1,11 +1,26 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import Context from '../context/auth-context';
 import Loading from '../components/Loading/Loading';
+import Tabs from '../components/Tabs/Tabs';
 import BookingList from '../components/BookingList/BookingList';
+import BookingsChart from '../components/BookingsChart';
 
 function Bookings() {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('Bookings');
+  const [tabList] = useState([
+    {
+      name: 'Bookings',
+      icon: '',
+      content: 'Bookings',
+    },
+    {
+      name: 'Chart',
+      icon: '',
+      content: 'Chart',
+    },
+  ]);
 
   const { token } = useContext(Context);
   const isActive = useRef(true);
@@ -22,6 +37,7 @@ function Bookings() {
               _id
               title
               date
+              price
             }
           }
         }
@@ -88,15 +104,30 @@ function Bookings() {
     return () => (isActive.current = false);
   }, []);
 
+  const changeActiveTab = (tab) => {
+    setActiveTab(tab);
+  };
+
   return (
     <section className="section">
       {isLoading ? (
         <Loading />
       ) : (
-        <BookingList
-          bookings={bookings}
-          handleCancelBooking={handleCancelBooking}
-        />
+        <>
+          {' '}
+          <Tabs
+            tabList={tabList}
+            activeTab={activeTab}
+            changeActiveTab={changeActiveTab}
+          />
+          {activeTab === 'Chart' && <BookingsChart bookings={bookings} />}
+          {activeTab === 'Bookings' && (
+            <BookingList
+              bookings={bookings}
+              handleCancelBooking={handleCancelBooking}
+            />
+          )}
+        </>
       )}
     </section>
   );
