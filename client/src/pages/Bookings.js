@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import Context from '../context/auth-context';
 import Loading from '../components/Loading/Loading';
 import BookingList from '../components/BookingList/BookingList';
@@ -8,7 +8,7 @@ function Bookings() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { token } = useContext(Context);
-  let isActive = true;
+  const isActive = useRef(true);
 
   const fetchBookings = async () => {
     setIsLoading(true);
@@ -39,7 +39,7 @@ function Bookings() {
       });
       const { data } = await res.json();
       setIsLoading(false);
-      if (isActive) setBookings(data.bookings);
+      if (!!isActive.current) setBookings(data.bookings);
     } catch (err) {
       setIsLoading(false);
       console.log(err);
@@ -83,7 +83,7 @@ function Bookings() {
 
   useEffect(() => {
     fetchBookings();
-    return () => (isActive = false);
+    return () => (isActive.current = false);
   }, []);
 
   return (
